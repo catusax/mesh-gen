@@ -1,12 +1,12 @@
-# mesher
+# mesh-gen
 
-The thing is , microservices have a lot of duplicate basic codes, you have to copy-paste them for every service.
+microservices have a lot of duplicate basic codes, you have to copy-paste them for every service.
 mesher can generate that codes for you.
 
 - generate project scaffold, kubernetes resources, and dockerfile
 - generate testing, handler, and client code form protobuf definition file
 
-## mesher cli
+## mesh-gen cli
 
 ### TL;DR:
 
