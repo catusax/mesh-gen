@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package test;
+
+option go_package = "./proto;test";
+
+service Wallet {
+  // insert 234124321
+  // adasda
+  // frtgrt
+  // asdad
+  rpc Insert(InsertRequest) returns (InsertResponse) {}
+  rpc Newwwwwwwwwwwwwwwwwwww(InsertRequest) returns (InsertResponse) {}
+  rpc Delete(DeleteRequest) returns (DeleteResponse){}
+  rpc ClientStream(stream ClientStreamRequest) returns (ClientStreamResponse) {}
+  rpc ServerStream(ServerStreamRequest) returns (stream ServerStreamResponse) {}
+  rpc BidiStream(stream BidiStreamRequest) returns (stream BidiStreamResponse) {}
+}
+
+message InsertRequest {
+  item item = 1;
+}
+
+message DeleteRequest{
+  repeated string id = 1;
+  enum Corpus {
+    UNIVERSAL = 0;
+    WEB = 1;
+    IMAGES = 2;
+    LOCAL = 3;
+    NEWS = 4;
+    PRODUCTS = 5;
+    VIDEO = 6;
+  }
+  Corpus corpus = 4;
+
+}
+
+message InsertResponse {
+  int32 code = 1;
+  string msg = 2;
+}
+
+message DeleteResponse{
+  int32 code = 1;
+  string msg = 2;
+}
+
+
+message item {
+  optional string user_id = 1;
+  string id = 2;
+  optional TestEnum val = 3;
+  TestEnum val2 = 4;
+}
+enum TestEnum {
+  UNIVERSAL = 0;
+  WEB = 1;
+  IMAGES = 2;
+  LOCAL = 3;
+  NEWS = 4;
+  PRODUCTS = 5;
+  VIDEO = 6;
+}
+
+
+
+message ClientStreamRequest {
+  int64 stroke = 1;
+}
+
+message ClientStreamResponse {
+  int64 count = 1;
+}
+
+message ServerStreamRequest {
+  int64 count = 1;
+}
+
+message ServerStreamResponse {
+  int64 count = 1;
+}
+
+message BidiStreamRequest {
+  int64 stroke = 1;
+}
+
+message BidiStreamResponse {
+  int64 stroke = 1;
+}
