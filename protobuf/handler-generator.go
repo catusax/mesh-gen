@@ -205,12 +205,8 @@ func generateMethod(buf *bytes.Buffer, g *protogen.GeneratedFile, srv *protogen.
 	FPrint(buf, g, method.Comments.Leading,
 		"func ", serverSignature(g, method), " {")
 
-	FPrint(buf, g, "//TODO:implement")
-	if !method.Desc.IsStreamingClient() && !method.Desc.IsStreamingServer() {
-		FPrint(buf, g, "return nil, nil")
-	} else {
-		FPrint(buf, g, "return nil")
-	}
+	FPrint(buf, g, "//TODO:implement me")
+	FPrint(buf, g, "panic(\"implement me\")")
 
 	FPrint(buf, g, "}")
 
