@@ -12,6 +12,7 @@ var handler *bool
 var mesh *string
 var namespace *string
 var port *string
+var name *string
 
 func main() {
 
@@ -21,6 +22,7 @@ func main() {
 	mesh = flags.String("mesh", "", "service-mesh type for generated client")
 	namespace = flags.String("namespace", "default", "k8s namespace of your service")
 	port = flags.String("port", "8080", "grpc port of your service")
+	name = flags.String("name", "localhost", "name your service")
 
 	protogen.Options{
 		ParamFunc: flags.Set,
@@ -30,7 +32,7 @@ func main() {
 			if !f.Generate {
 				continue
 			}
-			protobuf.GenerateClientFile(gen, f, *mesh, *namespace, *port)
+			protobuf.GenerateClientFile(gen, f, *mesh, *namespace, *port, *name)
 
 			if *test {
 				protobuf.GenerateTestFile(gen, f)
