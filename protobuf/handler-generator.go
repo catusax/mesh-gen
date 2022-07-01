@@ -183,7 +183,7 @@ func generateNewHandlerFile(g *protogen.GeneratedFile, file *protogen.File) *pro
 
 	//create client
 	for _, srv := range file.Services {
-		g.P("type ", srv.Desc.Name(), " struct {")
+		g.P("type ", srv.GoName, " struct {")
 		g.P("	pb.Unimplemented", srv.GoName, "Server")
 		g.P("}")
 

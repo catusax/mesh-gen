@@ -8,6 +8,7 @@ import (
 
 var (
 	osPackage           = protogen.GoImportPath("os")
+	syncPackage         = protogen.GoImportPath("sync")
 	grpcPackage         = protogen.GoImportPath("google.golang.org/grpc")
 	grpcInsecurePackage = protogen.GoImportPath("google.golang.org/grpc/credentials/insecure")
 )
@@ -23,6 +24,8 @@ func GenerateClientFile(gen *protogen.Plugin, file *protogen.File, mesh, namespa
 
 	//create client
 	for _, srv := range file.Services {
+		g.P("var _", srv.GoName, "Once ", syncPackage.Ident("Once"))
+		g.P("var _", srv.GoName, "client ", srv.GoName, "Client")
 
 		g.P("func GetNew", srv.GoName, "Client() ", srv.GoName, "Client {")
 		g.P(` var host string`)
@@ -32,6 +35,8 @@ func GenerateClientFile(gen *protogen.Plugin, file *protogen.File, mesh, namespa
 	} else {
 		host = "localhost"
 	}`)
+		g.P("_", srv.GoName, "Once.Do(func() {")
+
 		g.P(" dial, err := ", grpcPackage.Ident("Dial"), "(host+\":", port, "\",",
 			grpcPackage.Ident("WithTransportCredentials"),
 			"(", grpcInsecurePackage.Ident("NewCredentials"), "()))")
@@ -40,7 +45,11 @@ func GenerateClientFile(gen *protogen.Plugin, file *protogen.File, mesh, namespa
 		panic(err)
 	}
 `)
-		g.P("return New", srv.GoName, "Client(dial)")
+		g.P("_", srv.GoName, "client = New", srv.GoName, "Client(dial)")
+
+		g.P("})")
+
+		g.P("return _", srv.GoName, "client ")
 		g.P("}")
 	}
 
