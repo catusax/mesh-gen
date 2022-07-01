@@ -49,7 +49,7 @@ func (g *generator) Generate(files []File) error {
 			},
 			"lower": strings.ToLower,
 			"title": func(s string) string {
-				return strings.ReplaceAll(strings.Title(s), "-", "")
+				return strings.ReplaceAll(strings.Title(strings.ReplaceAll(s, "_", "-")), "-", "")
 			},
 		}
 		t, err := template.New(fp).Funcs(fn).Parse(file.Template)
