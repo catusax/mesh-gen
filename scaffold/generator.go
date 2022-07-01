@@ -51,6 +51,9 @@ func (g *generator) Generate(files []File) error {
 			"title": func(s string) string {
 				return strings.ReplaceAll(strings.Title(strings.ReplaceAll(s, "_", "-")), "-", "")
 			},
+			"dash": func(s string) string {
+				return strings.ReplaceAll(s, "_", "-")
+			},
 		}
 		t, err := template.New(fp).Funcs(fn).Parse(file.Template)
 		if err != nil {

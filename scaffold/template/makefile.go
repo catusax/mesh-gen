@@ -39,7 +39,7 @@ tidy:
 
 .PHONY: build
 build:
-	@go build -o $(BIN) *.go
+	@CGO_ENABLED=0 GOOS=linux go build -o $(BIN) *.go
 
 .PHONY: test
 test:

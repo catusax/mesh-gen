@@ -7,7 +7,7 @@ var KubernetesEnv = `---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{.Service}}-env
+  name: {{dash .Service}}-env
   namespace: {{.Namespace}}
 data:
   CONTAINER: kubernetes
@@ -20,36 +20,36 @@ var KubernetesDeployment = `---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{.Service}}
+  name: {{dash .Service}}
   namespace: {{.Namespace}}
   labels:
-    app: {{.Service}}
+    app: {{dash .Service}}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{.Service}}
+      app: {{dash .Service}}
   template:
     metadata:
       labels:
-        app: {{.Service}}
+        app: {{dash .Service}}
     spec:
       containers:
-      - name: {{.Service}}
+      - name: {{dash .Service}}
         image: {{.ContainerTag}}:{{.Version}}
         envFrom:
         - configMapRef:
-            name: {{.Service}}-env
+            name: {{dash .Service}}-env
 
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{.Service}}-grpc
+  name: {{dash .Service}}-grpc
   namespace: {{.Namespace}}
   labels:
-    app: {{.Service}}-grpc
+    app: {{dash .Service}}-grpc
   annotations:
     mesh.traefik.io/traffic-type: "http"
     mesh.traefik.io/scheme: "h2c"
@@ -58,5 +58,5 @@ spec:
     - port: {{.Port}}
       name: grpc
   selector:
-    app: {{.Service}}
+    app: {{dash .Service}}
 `
