@@ -4,6 +4,7 @@ package protobuf
 
 import (
 	"google.golang.org/protobuf/compiler/protogen"
+	"strings"
 )
 
 var (
@@ -57,6 +58,7 @@ func GenerateClientFile(gen *protogen.Plugin, file *protogen.File, mesh, namespa
 }
 
 func getServiceMeshHost(name, mesh, namespace string) string {
+	name = strings.ReplaceAll(name, "_", "-") + "-grpc"
 	switch mesh {
 	case "traefik-mesh":
 		return name + "." + namespace + ".traefik.mesh"
