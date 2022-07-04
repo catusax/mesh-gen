@@ -9,7 +9,9 @@ metadata:
   name: {{.Service}}
 build:
   artifacts:
-  - image: {{.ContainerTag}}
+    - image: {{.ContainerTag}}
+  local:
+    useBuildkit: true
 deploy:
   kubectl:
     manifests:

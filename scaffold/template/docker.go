@@ -6,7 +6,7 @@ ENV CGO_ENABLED=0 GOOS=linux
 RUN apk --update --no-cache add ca-certificates gcc libtool make musl-dev protoc
 WORKDIR /go/src/{{.Service}}
 COPY . .
-RUN make tidy build
+RUN --mount=type=cache,target=/root/.cache/go-build make tidy build
 
 FROM scratch
 ENV CONTAINER=docker

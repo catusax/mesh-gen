@@ -53,7 +53,7 @@ else
 	TAG=$(REGISTRY_PREFIX)/$(NAME)
 endif
 docker:
-	@docker build -t $(TAG):$(VERSION) .
+	@DOCKER_BUILDKIT=1 docker build -t $(TAG):$(VERSION) .
 
 .PHONY: docker-push
 docker-push:
