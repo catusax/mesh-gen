@@ -28,7 +28,7 @@ func GenerateClientFile(gen *protogen.Plugin, file *protogen.File, mesh, namespa
 		g.P("var _", srv.GoName, "Once ", syncPackage.Ident("Once"))
 		g.P("var _", srv.GoName, "client ", srv.GoName, "Client")
 
-		g.P("func GetNew", srv.GoName, "Client() ", srv.GoName, "Client {")
+		g.P("func Get", srv.GoName, "Client() ", srv.GoName, "Client {")
 		g.P(` var host string`)
 		g.P("if ", osPackage.Ident("Getenv"), "(\"CONTAINER\") != \"\" {")
 		g.P("host = \"", getServiceMeshHost(name, mesh, namespace), "\"")
@@ -43,9 +43,10 @@ func GenerateClientFile(gen *protogen.Plugin, file *protogen.File, mesh, namespa
 			"(", grpcInsecurePackage.Ident("NewCredentials"), "()))")
 
 		g.P(`if err != nil {
-		panic(err)
-	}
-`)
+		panic(err)`)
+		g.P("_", srv.GoName, "Once = ", syncPackage.Ident("Once{}"))
+		g.P("}")
+
 		g.P("_", srv.GoName, "client = New", srv.GoName, "Client(dial)")
 
 		g.P("})")
