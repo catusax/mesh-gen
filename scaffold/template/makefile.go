@@ -23,7 +23,7 @@ proto:
 	@cp handler/$(NAME)_test.go proto/$(NAME)_test.go || true
 	@protoc --proto_path=. -I${GOPATH}/src --go-grpc_out=. --go_out=:. --go-mesh-gen_out=. --go-mesh-gen_opt=mesh=traefik-mesh,namespace=$(NAMESPACE),port=$(PORT),name=$(NAME) proto/$(NAME).proto
 	@mv proto/$(NAME)_handler.go handler/$(NAME).go
-#	@mv proto/$(NAME)_test.go handler/$(NAME)_test.go
+	#@mv proto/$(NAME)_test.go handler/$(NAME)_test.go
 
 .PHONY: generate
 generate:
