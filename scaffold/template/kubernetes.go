@@ -35,11 +35,11 @@ spec:
         app: {{dash .Service}}
     spec:
       containers:
-      - name: {{dash .Service}}
-        image: {{.ContainerTag}}:{{.Version}}
-        envFrom:
-        - configMapRef:
-            name: {{dash .Service}}-env
+        - name: {{dash .Service}}
+          image: {{.ContainerTag}}:{{.Version}}
+          envFrom:
+            - configMapRef:
+                name: {{dash .Service}}-env
 
 
 ---
