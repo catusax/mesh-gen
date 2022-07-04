@@ -13,9 +13,6 @@ import (
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
-	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
-	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
-	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"google.golang.org/grpc"
 )
 
@@ -49,17 +46,11 @@ func main() {
 func NewRpcServer(logger *zap.Logger) *grpc.Server {
 	return grpc.NewServer(
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
-			grpc_ctxtags.StreamServerInterceptor(),
-			grpc_opentracing.StreamServerInterceptor(),
-			grpc_prometheus.StreamServerInterceptor,
-			grpc_zap.StreamServerInterceptor(logger),
+			grpc_zap.StreamServerInterceptor(zap.L()),
 			grpc_recovery.StreamServerInterceptor(),
 		)),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
-			grpc_ctxtags.UnaryServerInterceptor(),
-			grpc_opentracing.UnaryServerInterceptor(),
-			grpc_prometheus.UnaryServerInterceptor,
-			grpc_zap.UnaryServerInterceptor(logger),
+			grpc_zap.UnaryServerInterceptor(zap.L()),
 			grpc_recovery.UnaryServerInterceptor(),
 		)),
 	)
