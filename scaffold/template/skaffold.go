@@ -10,10 +10,12 @@ metadata:
 build:
   artifacts:
     - image: {{.ContainerTag}}
+      docker:
+        noCache: false
   local:
     useBuildkit: true
 deploy:
   kubectl:
     manifests:
-    - resources/*.yaml
+      - resources/*.yaml
 `
