@@ -65,6 +65,6 @@ dev:
 
 .PHONY: run
 run:
-	@skaffold run
+	@skaffold run --tail
 
 `
