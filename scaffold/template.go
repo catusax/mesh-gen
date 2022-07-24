@@ -1,7 +1,9 @@
 package scaffold
 
 import (
+	"fmt"
 	"github.com/catusax/mesh-gen/scaffold/template"
+	"github.com/sergi/go-diff/diffmatchpatch"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -9,16 +11,18 @@ import (
 
 var templateDir = ".template"
 
-func GenTemplate(path string) error {
+func GenTemplate(path string, force bool) error {
 	var dir = filepath.Join(path, templateDir)
 
 	err := os.MkdirAll(dir, 0750)
 	if err != nil {
 		return err
 	}
-	return WriteTemplate(dir)
+	return WriteTemplate(dir, force)
 }
 
+//GetTemplate search template in config dir,ordered by:
+// current dir > .template > ../.template > ~/.template > default
 func GetTemplate(t template.Template) string {
 	var file []byte
 	var searchFiles = []string{
@@ -46,7 +50,8 @@ func GetTemplate(t template.Template) string {
 
 }
 
-func WriteTemplate(path string) error {
+//WriteTemplate Write Template to dir ,so user can edit
+func WriteTemplate(path string, force bool) error {
 	var templates = []template.Template{
 		template.Dockerfile,
 		template.DockerIgnore,
@@ -70,12 +75,46 @@ func WriteTemplate(path string) error {
 			}
 		}
 
-		err := ioutil.WriteFile(filepath.Join(path, templates[i].Path+".tmpl"), []byte(templates[i].Value), 0644)
+		err := writeFile(filepath.Join(path, templates[i].Path+".tmpl"), &templates[i].Value, force)
 		if err != nil {
 			return err
 		}
 	}
-
 	return nil
+}
 
+func writeFile(file string, content *string, force bool) error {
+	if force {
+		return ioutil.WriteFile(file, []byte(*content), 0644)
+	}
+	old, err := ioutil.ReadFile(file)
+	if err == nil {
+		diffMatch := diffmatchpatch.New()
+		diff := diffMatch.DiffMain(string(old), *content, true)
+
+		if len(diff) == 0 || len(diff) == 1 && diff[0].Type == diffmatchpatch.DiffEqual {
+			return nil
+		}
+		fmt.Println(file, " is different from latest version! ", len(diff))
+		fmt.Println(diffMatch.DiffPrettyText(diff))
+		fmt.Println()
+		for {
+			var yes string
+			fmt.Print(file, " is different from latest version!", "override? y/n :")
+			fmt.Scanf("%s", &yes)
+			if yes == "y" || yes == "Y" {
+				break
+			}
+			if yes == "n" || yes == "N" {
+				return nil
+			}
+		}
+
+	} else {
+		err = ioutil.WriteFile(file, []byte(*content), 0644)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

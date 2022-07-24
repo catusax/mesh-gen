@@ -19,59 +19,23 @@ func init() {
 		Name:    "generate",
 		Aliases: []string{"gen"},
 		Usage:   "Generate project Skaffold & Kubernetes resource template files after the fact",
-		Action: func(context *cli.Context) error {
-			return Skaffold(context)
-		},
-	}
-	cmd.Subcommands = []*cli.Command{
-		{
-			Name:    "all",
-			Aliases: []string{"A"},
-			Usage:   "Regenerate all files except ./handler ./proto ./go.mod",
-			Action: func(context *cli.Context) error {
-				return Skaffold(context, WithAllFiles())
+		Action:  Skaffold,
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name: "all",
+				Aliases: []string{
+					"A",
+				},
+				Usage: "Regenerate all files except ./handler ./proto ./go.mod",
 			},
 		},
 	}
 	mcli.Register(cmd)
 }
 
-type GenOption interface {
-	apply(*genOptions)
-}
-
-type genOptions struct {
-	all bool
-}
-
-func WithAllFiles() GenOption {
-	return newFuncOption(func(options *genOptions) {
-		options.all = true
-	})
-}
-
-type funcOption struct {
-	f func(options *genOptions)
-}
-
-func (f funcOption) apply(do *genOptions) {
-	f.f(do)
-}
-
-func newFuncOption(f func(options *genOptions)) *funcOption {
-	return &funcOption{
-		f: f,
-	}
-}
-
 // Skaffold generates Skaffold template files in the current working directory.
 // Exits on error.
-func Skaffold(ctx *cli.Context, options ...GenOption) error {
-	var option genOptions
-
-	for _, opt := range options {
-		opt.apply(&option)
-	}
+func Skaffold(ctx *cli.Context) error {
 
 	service, err := getService()
 	if err != nil {
@@ -127,7 +91,7 @@ func Skaffold(ctx *cli.Context, options ...GenOption) error {
 		{"skaffold.yaml", generator2.GetTemplate(template.SkaffoldCFG)},
 	}
 
-	if option.all {
+	if ctx.Bool("all") {
 		files = append(files,
 			generator2.File{".gitignore", generator2.GetTemplate(template.GitIgnore)},
 			generator2.File{"Makefile", generator2.GetTemplate(template.Makefile)},
