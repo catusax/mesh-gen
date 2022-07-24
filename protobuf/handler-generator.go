@@ -8,28 +8,33 @@ import (
 	"go/token"
 	"google.golang.org/protobuf/compiler/protogen"
 	"io"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
 // https://github.com/grpc/grpc-go/blob/master/cmd/protoc-gen-go-grpc/grpc.go#L215
 
-// GenerateHandlerFile generates handler to be implemented.
+// GenerateHandlerFile generates _handler to be implemented.
 func GenerateHandlerFile(gen *protogen.Plugin, file *protogen.File) *protogen.GeneratedFile {
 	filename := file.GeneratedFilenamePrefix + "_handler.go"
 	g := gen.NewGeneratedFile(filename, file.GoImportPath)
 
-	prevFile, err := os.Open(filename)
+	//prevFile, err := os.Open(filename)
+	entry, _ := os.ReadDir(GetConfig().Handler)
 
-	defer prevFile.Close()
-	exist := err == nil
+	//defer prevFile.Close()
+	exist := len(entry) != 0
 	if exist {
-		src, err := os.ReadFile(filename)
-		if err != nil {
-			panic(err)
-		}
+		//src, err := os.ReadFile(filename)
+		//if err != nil {
+		//	panic(err)
+		//}
 
-		addHandlerToFile(src, g, file)
+		g.Skip()
+
+		addHandlerToFile(gen, file)
 
 		return nil
 
@@ -40,11 +45,35 @@ func GenerateHandlerFile(gen *protogen.Plugin, file *protogen.File) *protogen.Ge
 
 }
 
-func addHandlerToFile(src []byte, g *protogen.GeneratedFile, file *protogen.File) *protogen.GeneratedFile {
+type Decl struct {
+	File string
+	Decl ast.Decl
+}
+
+var files = make(map[string][]byte)
+
+func addHandlerToFile(gen *protogen.Plugin, file *protogen.File) *protogen.GeneratedFile {
 	fset := token.NewFileSet()
-	astFile, err := parser.ParseFile(fset, "", src, parser.ParseComments)
+	asts, err := ParsePackageDir(fset, GetConfig().Handler)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "===panic====\n\n%s\n\n====panic===", src)
+		panic(err)
+	}
+
+	astfiles := asts.Files
+
+	var decls []Decl
+	for handlerFileName, astfile := range astfiles {
+		for i := range astfile.Decls {
+			decls = append(decls, Decl{
+				File: handlerFileName,
+				Decl: astfile.Decls[i],
+			})
+		}
+
+	}
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "===panic====\n\n%s\n\n====panic===")
 		panic(err)
 	}
 
@@ -59,65 +88,46 @@ func addHandlerToFile(src []byte, g *protogen.GeneratedFile, file *protogen.File
 
 	MethodLoop:
 		for methodIndex, method := range srv.Methods {
-			for _, d := range astFile.Decls {
-				if genDecl, ok := d.(*ast.FuncDecl); ok &&
+			for _, d := range decls { //range ast decls，find if any match
+				if genDecl, ok := d.Decl.(*ast.FuncDecl); ok &&
 					isMethod(genDecl, method.GoName, srv.GoName) { //method already exists
 
 					inputs := getFuncParamTypes(genDecl)
 					outputs := getFuncResultTypes(genDecl)
 
-					if !method.Desc.IsStreamingClient() && !method.Desc.IsStreamingServer() { //not stream
-						if len(inputs) > 0 && inputs[len(inputs)-1] == "*"+method.Input.GoIdent.GoName {
+					if !method.Desc.IsStreamingClient() && !method.Desc.IsStreamingServer() { //normal method
+						if len(inputs) > 0 && inputs[len(inputs)-1] == "*"+method.Input.GoIdent.GoName { //params not match
 
 							if len(outputs) > 0 && outputs[0] == "*"+method.Output.GoIdent.GoName {
 								continue MethodLoop
 							}
 						}
 
-						goto Generate
+						changeMethod(d.File, file, gen, genDecl, method)
+						return nil
 					}
 
-					if method.Desc.IsStreamingClient() { // client ony have xxxServer param
+					if method.Desc.IsStreamingClient() { // client only have xxxServer param
 						if len(inputs) > 0 && inputs[len(inputs)-1] == method.Parent.GoName+"_"+method.GoName+"Server" {
 							continue MethodLoop
 						}
-						goto Generate
+						changeMethod(d.File, file, gen, genDecl, method)
+						return nil
 					}
 
 					if method.Desc.IsStreamingServer() || !method.Desc.IsStreamingClient() { //server have two param, xxxrequest and xxxServer
 						if len(inputs) > 1 &&
-							inputs[len(inputs)-2] == "*"+g.QualifiedGoIdent(method.Input.GoIdent) &&
+							inputs[len(inputs)-2] == "*"+method.Input.GoIdent.GoName &&
 							inputs[len(inputs)-1] == method.Parent.GoName+"_"+method.GoName+"Server" {
 							continue MethodLoop
 						}
 					}
 
-				Generate:
-
+					//method exist but not correct, try to change method signature
 					//continue MethodLoop
-
 					// replace signature
-
-					buff := bytes.NewBuffer(make([]byte, 0))
-
-					buff.Write(src[:genDecl.Pos()-1]) //position before "func"
-
-					// find line end
-					var end = int(genDecl.Pos())
-					for ; end < len(src); end++ {
-						if src[end] == byte('\n') {
-							break
-						}
-					}
-
-					//fmt.Fprintf(os.Stderr, "\n\n===replace====%s==replace===== \n\n", method.GoName)
-
-					FPrint(buff, g, "func ", serverSignature(g, method), " { //signature replaced by mesh-gen due to proto change")
-					buff.Write(src[end:])
-
-					// 修改数据后长度会变，需要重新解析语法树 , 否则需要记录每次插入的长度
-					addHandlerToFile(buff.Bytes(), g, file)
-					return g
+					changeMethod(d.File, file, gen, genDecl, method)
+					return nil
 
 				}
 			}
@@ -126,19 +136,29 @@ func addHandlerToFile(src []byte, g *protogen.GeneratedFile, file *protogen.File
 
 			//fmt.Fprintf(os.Stderr, "\n\n===generate====%s==generate===== \n\n", method.GoName)
 
+			var src []byte
+			if v, ok := files[filepath.Join(GetConfig().Handler, srv.GoName+".go")]; ok {
+				src = v
+			} else {
+				src, _ = os.ReadFile(filepath.Join(GetConfig().Handler, srv.GoName+".go"))
+			}
+
+			g := gen.NewGeneratedFile(srv.GoName+".go", file.GoImportPath)
+
 			//find next method position
 			var insertPosition = len(src)
 			if len(srv.Methods) != methodIndex+1 {
 			SearchNext:
-				for _, d := range astFile.Decls {
-					if genDecl, ok := d.(*ast.FuncDecl); ok {
+				for _, d := range decls {
+					if genDecl, ok := d.Decl.(*ast.FuncDecl); ok {
 						if isMethod(genDecl, srv.Methods[methodIndex+1].GoName, srv.GoName) {
 							if genDecl.Doc != nil {
-								fmt.Fprintf(os.Stderr, "\n\n$$$found doc %d $$$$ \n\n", genDecl.Doc.Pos())
+								//fmt.Fprintf(os.Stderr, "\n\n$$$found doc %d $$$$ \n\n", genDecl.Doc.Pos())
 								insertPosition = int(genDecl.Doc.Pos())
 								break SearchNext
 							}
-							fmt.Fprintf(os.Stderr, "\n\n$$$not found doc %d $$$$ \n\n", genDecl.Pos()-1)
+
+							//fmt.Fprintf(os.Stderr, "\n\n$$$not found doc %d $$$$ \n\n", genDecl.Pos()-1)
 							insertPosition = int(genDecl.Pos() - 1)
 							break SearchNext
 						}
@@ -157,22 +177,49 @@ func addHandlerToFile(src []byte, g *protogen.GeneratedFile, file *protogen.File
 			buff.Write(src[insertPosition:])
 
 			// 修改数据后长度会变，需要重新解析语法树 , 否则需要记录每次插入的长度
-			addHandlerToFile(buff.Bytes(), g, file)
-			return g
+			files[filepath.Join(GetConfig().Handler, srv.GoName+".go")] = buff.Bytes()
+			addHandlerToFile(gen, file)
+			g.Skip()
+			return nil
+		}
+	}
 
+	for k, v := range files {
+		g := gen.NewGeneratedFile(k, file.GoImportPath)
+		if len(v) >= 0 {
+			_, err := g.Write(v)
+			if err != nil {
+				panic(err)
+			}
+		}
+	}
+
+	if !GetConfig().Test {
+		return nil
+	}
+
+	for handlerFileName, astfile := range astfiles {
+		for i := range astfile.Decls {
+			decls = append(decls, Decl{
+				File: handlerFileName,
+				Decl: astfile.Decls[i],
+			})
+		}
+
+		if !strings.HasSuffix(handlerFileName, "_test.go") {
+			GenerateTestFile(gen, file, handlerFileName, astfile)
 		}
 
 	}
 
-	g.Write(src)
-	return g
+	return nil
 
 }
 
 func generateNewHandlerFile(g *protogen.GeneratedFile, file *protogen.File) *protogen.GeneratedFile {
-	g.P("// Code generated by protoc-gen-go-mesh-gen.")
+	g.P("// Code generated by protoc-gen-go-_mesh-gen.")
 	g.P()
-	g.P("package handler")
+	g.P("package _handler")
 	g.P()
 
 	g.P(`import(
@@ -212,6 +259,44 @@ func generateMethod(buf *bytes.Buffer, g *protogen.GeneratedFile, srv *protogen.
 
 }
 
+func changeMethod(fileName string, file *protogen.File, gen *protogen.Plugin, funcDecl *ast.FuncDecl, method *protogen.Method) {
+	//method exist but not correct, try to change method signature
+	//continue MethodLoop
+
+	// replace signature
+
+	var src []byte
+	if v, ok := files[fileName]; ok {
+		src = v
+	} else {
+		src, _ = os.ReadFile(fileName)
+	}
+	g := gen.NewGeneratedFile(fileName, file.GoImportPath)
+
+	buff := bytes.NewBuffer(make([]byte, 0))
+
+	buff.Write(src[:funcDecl.Pos()-1]) //position before "func"
+
+	// find line end
+	var end = int(funcDecl.Pos())
+	for ; end < len(src); end++ {
+		if src[end] == byte('\n') {
+			break
+		}
+	}
+
+	//fmt.Fprintf(os.Stderr, "\n\n===replace====%s==replace===== \n\n", method.GoName)
+
+	FPrint(buff, g, "func ", serverSignature(g, method), " { //signature replaced by _mesh-gen due to proto change")
+	buff.Write(src[end:])
+
+	// 修改数据后长度会变，需要重新解析语法树 , 否则需要记录每次插入的长度
+	files[fileName] = buff.Bytes()
+	addHandlerToFile(gen, file)
+	g.Skip()
+
+}
+
 func serverSignature(g *protogen.GeneratedFile, method *protogen.Method) string {
 	var reqArgs []string
 	ret := "error"
@@ -243,4 +328,27 @@ func FPrint(buf io.Writer, g *protogen.GeneratedFile, v ...interface{}) {
 	}
 
 	fmt.Fprintln(buf)
+}
+
+func ParsePackageDir(fset *token.FileSet, path string) (pkg *ast.Package, first error) {
+	pkgs, err := parser.ParseDir(fset, path, func(info fs.FileInfo) bool {
+		if _, ok := files[info.Name()]; ok {
+			return false
+		}
+		return true
+	}, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range files {
+		f, err := parser.ParseFile(fset, "", v, parser.ParseComments)
+		if err != nil {
+			panic(err)
+		}
+		pkgs[GetConfig().Handler].Files[k] = f
+	}
+
+	return pkgs[GetConfig().Handler], nil
+
 }

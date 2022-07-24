@@ -2,6 +2,7 @@ package protobuf
 
 import "go/ast"
 
+//isMethod check if FuncDecl implement method
 func isMethod(genDecl *ast.FuncDecl, method, receiver string) bool {
 
 	var funcReceiver = getFuncReceiverType(genDecl)
@@ -17,6 +18,9 @@ func isFunc(genDecl *ast.FuncDecl, method string) bool {
 }
 
 func getFuncReceiverType(genDecl *ast.FuncDecl) string {
+	if genDecl.Recv == nil {
+		return ""
+	}
 	if genDecl.Recv.List == nil { // nil or len() == 1
 		return ""
 	}
