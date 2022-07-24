@@ -103,10 +103,9 @@ func Skaffold(ctx *cli.Context, options ...GenOption) error {
 		return err
 	}
 
-	registryPrefix, err := getRegistryPrefix()
-	if err != nil {
-		return err
-	}
+	registryPrefix, _ := getRegistryPrefix()
+
+	mesh, _ := getMesh()
 
 	g := generator2.New(
 		generator2.Service(service),
@@ -117,6 +116,7 @@ func Skaffold(ctx *cli.Context, options ...GenOption) error {
 		generator2.Port(port),
 		generator2.Namespace(namespace),
 		generator2.RegistryPrefix(registryPrefix),
+		generator2.Mesh(mesh),
 	)
 
 	files := []generator2.File{
@@ -145,31 +145,7 @@ func Skaffold(ctx *cli.Context, options ...GenOption) error {
 }
 
 func getService() (string, error) {
-
-	f, err := os.Open("Makefile")
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-
-	name := ""
-
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-
-		if strings.HasPrefix(scanner.Text(), "NAME=") {
-			name = scanner.Text()
-		}
-	}
-
-	if name == "" {
-		fmt.Println("Makefile is missing NAME or VERSION variables")
-		return "", errors.New("could not get container tag")
-	}
-
-	name = name[strings.Index(name, "=")+1:]
-
-	return name, nil
+	return ReadKey("Makefile", "NAME")
 }
 
 func getServiceVendor(s string) (string, error) {
@@ -238,102 +214,53 @@ func getContainerTag() (string, error) {
 }
 
 func getVersion() (string, error) {
-	f, err := os.Open("Makefile")
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-
-	version := ""
-
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		if strings.HasPrefix(scanner.Text(), "VERSION=") {
-			version = scanner.Text()
-			break
-		}
-	}
-
-	version = version[strings.Index(version, "=")+1:]
-
-	if version == "" {
-		fmt.Println("Makefile is missing VERSION variable")
-		return "", errors.New("could not get container tag")
-	}
-
-	return version, nil
+	return ReadKey("Makefile", "VERSION")
 }
 
 func getPort() (string, error) {
-	f, err := os.Open("Makefile")
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-
-	port := ""
-
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		if strings.HasPrefix(scanner.Text(), "PORT=") {
-			port = scanner.Text()
-			break
-		}
-	}
-
-	port = port[strings.Index(port, "=")+1:]
-
-	if port == "" {
-		fmt.Println("Makefile is missing VERSION variable")
-		return "", errors.New("could not get container tag")
-	}
-
-	return port, nil
+	return ReadKey("Makefile", "PORT")
 }
 
 func getNamespace() (string, error) {
-	f, err := os.Open("Makefile")
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-
-	namespace := ""
-
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		if strings.HasPrefix(scanner.Text(), "NAMESPACE=") {
-			namespace = scanner.Text()
-			break
-		}
-	}
-
-	namespace = namespace[strings.Index(namespace, "=")+1:]
-
-	if namespace == "" {
-		fmt.Println("Makefile is missing NAMESPACE variable")
-		return "", errors.New("could not get container tag")
-	}
-
-	return namespace, nil
+	return ReadKey("Makefile", "NAMESPACE")
 }
 
 func getRegistryPrefix() (string, error) {
+	return ReadKey("Makefile", "REGISTRY_PREFIX")
+}
+
+func getMesh() (string, error) {
+	return ReadKey("Makefile", "MESH")
+}
+
+func ReadKey(file string, key string) (string, error) {
 	f, err := os.Open("Makefile")
 	if err != nil {
 		return "", err
 	}
 	defer f.Close()
 
-	registryPrefix := ""
+	value := ""
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		if strings.HasPrefix(scanner.Text(), "REGISTRY_PREFIX=") {
-			registryPrefix = scanner.Text()
+		if strings.HasPrefix(scanner.Text(), key+"=") {
+			value = scanner.Text()
 		}
 	}
-	registryPrefix = registryPrefix[strings.Index(registryPrefix, "=")+1:]
 
-	return registryPrefix, nil
+	if value == "" {
+		fmt.Println("Makefile is missing variable", key)
+		return "", errors.New("could not get " + key)
+	}
+
+	position := strings.Index(value, "=")
+	if position == -1 {
+		fmt.Println("WARN: Makefile is missing variable", key)
+		return "", errors.New("could not get " + key)
+	}
+
+	value = value[position+1:]
+
+	return value, nil
 }

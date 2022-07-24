@@ -24,6 +24,9 @@ type Options struct {
 
 	//RegistryPrefix eg: gcr.io/username/repo
 	RegistryPrefix string
+
+	//Mesh service mesh name eg:istio
+	Mesh string
 }
 
 // Option manipulates the Options passed.
@@ -77,5 +80,11 @@ func Namespace(r string) Option {
 func RegistryPrefix(r string) Option {
 	return func(o *Options) {
 		o.RegistryPrefix = r
+	}
+}
+
+func Mesh(r string) Option {
+	return func(o *Options) {
+		o.Mesh = r
 	}
 }

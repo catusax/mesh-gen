@@ -5,4 +5,5 @@ const (
 	defaultPort           = "8080"
 	defaultNamespace      = "default"
 	defaultRegistryPrefix = ""
+	defaultMesh           = "istio"
 )

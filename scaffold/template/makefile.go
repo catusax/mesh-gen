@@ -11,6 +11,7 @@ REGISTRY_PREFIX={{.RegistryPrefix}}
 VERSION={{.Version}}
 PORT={{.Port}}
 NAMESPACE={{.Namespace}}
+MESH={{.Mesh}}
 
 .PHONY: init
 init:
@@ -22,7 +23,7 @@ init:
 
 .PHONY: proto
 proto:
-	@protoc --proto_path=. -I${GOPATH}/src --go-grpc_out=. --go_out=:. --go-mesh-gen_out=. --go-mesh-gen_opt=mesh=istio,handler=handler,namespace=$(NAMESPACE),port=$(PORT),name=$(NAME) proto/$(NAME).proto
+	@protoc --proto_path=. -I${GOPATH}/src --go-grpc_out=. --go_out=:. --go-mesh-gen_out=. --go-mesh-gen_opt=mesh==$(MESH),handler=handler,namespace=$(NAMESPACE),port=$(PORT),name=$(NAME) proto/$(NAME).proto
 
 .PHONY: generate
 generate:
