@@ -73,3 +73,9 @@ func Namespace(r string) Option {
 		o.Namespace = r
 	}
 }
+
+func RegistryPrefix(r string) Option {
+	return func(o *Options) {
+		o.RegistryPrefix = r
+	}
+}

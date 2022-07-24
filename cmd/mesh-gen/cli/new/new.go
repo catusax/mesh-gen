@@ -60,6 +60,7 @@ func createProject(ctx *cli.Context) error {
 		generator2.ContainerVersion(defaultVersion),
 		generator2.Port(defaultPort),
 		generator2.Namespace(defaultNamespace),
+		generator2.RegistryPrefix(defaultRegistryPrefix),
 	)
 
 	files := []generator2.File{

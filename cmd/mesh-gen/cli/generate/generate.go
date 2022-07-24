@@ -15,16 +15,64 @@ import (
 )
 
 func init() {
-	mcli.Register(&cli.Command{
-		Name:   "generate",
-		Usage:  "Generate project Skaffold & Kubernetes resource template files after the fact",
-		Action: Skaffold,
+	cmd := &cli.Command{
+		Name:    "generate",
+		Aliases: []string{"gen"},
+		Usage:   "Generate project Skaffold & Kubernetes resource template files after the fact",
+		Action: func(context *cli.Context) error {
+			return Skaffold(context)
+		},
+	}
+	cmd.Subcommands = []*cli.Command{
+		{
+			Name:    "all",
+			Aliases: []string{"A"},
+			Usage:   "Regenerate all files except ./handler ./proto ./go.mod",
+			Action: func(context *cli.Context) error {
+				return Skaffold(context, WithAllFiles())
+			},
+		},
+	}
+	mcli.Register(cmd)
+}
+
+type GenOption interface {
+	apply(*genOptions)
+}
+
+type genOptions struct {
+	all bool
+}
+
+func WithAllFiles() GenOption {
+	return newFuncOption(func(options *genOptions) {
+		options.all = true
 	})
+}
+
+type funcOption struct {
+	f func(options *genOptions)
+}
+
+func (f funcOption) apply(do *genOptions) {
+	f.f(do)
+}
+
+func newFuncOption(f func(options *genOptions)) *funcOption {
+	return &funcOption{
+		f: f,
+	}
 }
 
 // Skaffold generates Skaffold template files in the current working directory.
 // Exits on error.
-func Skaffold(ctx *cli.Context) error {
+func Skaffold(ctx *cli.Context, options ...GenOption) error {
+	var option genOptions
+
+	for _, opt := range options {
+		opt.apply(&option)
+	}
+
 	service, err := getService()
 	if err != nil {
 		return err
@@ -55,6 +103,11 @@ func Skaffold(ctx *cli.Context) error {
 		return err
 	}
 
+	registryPrefix, err := getRegistryPrefix()
+	if err != nil {
+		return err
+	}
+
 	g := generator2.New(
 		generator2.Service(service),
 		generator2.Vendor(vendor),
@@ -63,6 +116,7 @@ func Skaffold(ctx *cli.Context) error {
 		generator2.ContainerVersion(version),
 		generator2.Port(port),
 		generator2.Namespace(namespace),
+		generator2.RegistryPrefix(registryPrefix),
 	)
 
 	files := []generator2.File{
@@ -71,6 +125,14 @@ func Skaffold(ctx *cli.Context) error {
 		{filepath.Join("resources", "configmap.yaml"), generator2.GetTemplate(template.KubernetesEnv)},
 		{filepath.Join("resources", "deployment.yaml"), generator2.GetTemplate(template.KubernetesDeployment)},
 		{"skaffold.yaml", generator2.GetTemplate(template.SkaffoldCFG)},
+	}
+
+	if option.all {
+		files = append(files,
+			generator2.File{".gitignore", generator2.GetTemplate(template.GitIgnore)},
+			generator2.File{"Makefile", generator2.GetTemplate(template.Makefile)},
+			generator2.File{"main.go", generator2.GetTemplate(template.MainSRV)},
+		)
 	}
 
 	if err := g.Generate(files); err != nil {
@@ -254,4 +316,24 @@ func getNamespace() (string, error) {
 	}
 
 	return namespace, nil
+}
+
+func getRegistryPrefix() (string, error) {
+	f, err := os.Open("Makefile")
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	registryPrefix := ""
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		if strings.HasPrefix(scanner.Text(), "REGISTRY_PREFIX=") {
+			registryPrefix = scanner.Text()
+		}
+	}
+	registryPrefix = registryPrefix[strings.Index(registryPrefix, "=")+1:]
+
+	return registryPrefix, nil
 }

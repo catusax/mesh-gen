@@ -5,7 +5,6 @@ var GitIgnore = Template{
 	Path: ".gitignore",
 	Value: `# don't commit the service binary to vcs
 {{.Service}}
-proto/*_test.go
 
 .idea
 .vscode
