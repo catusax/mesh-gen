@@ -1,8 +1,12 @@
 package template
 
+import "path/filepath"
+
 // KubernetesEnv is a Kubernetes configmap manifest template used for
 // environment variables in new projects.
-var KubernetesEnv = `---
+var KubernetesEnv = Template{
+	Path: filepath.Join("resources", "configmap.yaml"),
+	Value: `---
 
 apiVersion: v1
 kind: ConfigMap
@@ -11,11 +15,14 @@ metadata:
   namespace: {{.Namespace}}
 data:
   CONTAINER: kubernetes
-`
+`,
+}
 
 // KubernetesDeployment is a Kubernetes deployment manifest template used for
 // new projects.
-var KubernetesDeployment = `---
+var KubernetesDeployment = Template{
+	Path: filepath.Join("resources", "deployment.yaml"),
+	Value: `---
 
 apiVersion: apps/v1
 kind: Deployment
@@ -59,4 +66,5 @@ spec:
       name: grpc
   selector:
     app: {{dash .Service}}
-`
+`,
+}

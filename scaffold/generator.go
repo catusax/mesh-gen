@@ -1,6 +1,7 @@
 package scaffold
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -64,6 +65,8 @@ func (g *generator) Generate(files []File) error {
 		if err != nil {
 			return err
 		}
+		fmt.Println(
+			file.Path)
 	}
 
 	return nil

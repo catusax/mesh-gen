@@ -1,7 +1,11 @@
 package template
 
+import "path/filepath"
+
 // HandlerSRV is the handler template used for new service projects.
-var HandlerSRV = `package handler
+var HandlerSRV = Template{
+	Path: filepath.Join("handler", "name.go"),
+	Value: `package handler
 
 import (
 	"context"
@@ -70,4 +74,5 @@ func (e *{{title .Service}}) BidiStream(stream pb.{{title .Service}}_BidiStreamS
 		}
 	}
 }
-`
+`,
+}

@@ -1,7 +1,9 @@
 package template
 
 // Makefile is the Makefile template used for new projects.
-var Makefile = `
+var Makefile = Template{
+	Path: "Makefile",
+	Value: `
 GOPATH:=$(shell go env GOPATH)
 NAME={{.Service}}
 BIN={{.Service}}
@@ -64,4 +66,5 @@ dev:
 run:
 	@skaffold run --tail
 
-`
+`,
+}

@@ -12,7 +12,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-// NewCommand returns a new new cli command.
+// NewCommand returns a new cli command.
 func init() {
 	mcli.Register(&cli.Command{
 		Name:   "new",
@@ -63,21 +63,21 @@ func createProject(ctx *cli.Context) error {
 	)
 
 	files := []generator2.File{
-		{".dockerignore", template.DockerIgnore},
-		{".gitignore", template.GitIgnore},
-		{"Dockerfile", template.Dockerfile},
-		{"Makefile", template.Makefile},
-		{"go.mod", template.Module},
+		{".dockerignore", generator2.GetTemplate(template.DockerIgnore)},
+		{".gitignore", generator2.GetTemplate(template.GitIgnore)},
+		{"Dockerfile", generator2.GetTemplate(template.Dockerfile)},
+		{"Makefile", generator2.GetTemplate(template.Makefile)},
+		{"go.mod", generator2.GetTemplate(template.Module)},
 	}
 
 	//service and skaffold files
 	files = append(files, []generator2.File{
-		{"handler/" + name + ".go", template.HandlerSRV},
-		{"main.go", template.MainSRV},
-		{"proto/" + name + ".proto", template.ProtoSRV},
-		{"resources/configmap.yaml", template.KubernetesEnv},
-		{"resources/deployment.yaml", template.KubernetesDeployment},
-		{"skaffold.yaml", template.SkaffoldCFG},
+		{"handler/" + name + ".go", generator2.GetTemplate(template.HandlerSRV)},
+		{"main.go", generator2.GetTemplate(template.MainSRV)},
+		{"proto/" + name + ".proto", generator2.GetTemplate(template.ProtoSRV)},
+		{"resources/configmap.yaml", generator2.GetTemplate(template.KubernetesEnv)},
+		{"resources/deployment.yaml", generator2.GetTemplate(template.KubernetesDeployment)},
+		{"skaffold.yaml", generator2.GetTemplate(template.SkaffoldCFG)},
 	}...)
 
 	if err := g.Generate(files); err != nil {

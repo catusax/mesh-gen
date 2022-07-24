@@ -1,7 +1,11 @@
 package template
 
+import "path/filepath"
+
 // ProtoSRV is the .proto file template used for new service projects.
-var ProtoSRV = `syntax = "proto3";
+var ProtoSRV = Template{
+	Path: filepath.Join("proto", "name.proto"),
+	Value: `syntax = "proto3";
 
 package {{dehyphen .Service}};
 
@@ -45,4 +49,5 @@ message BidiStreamRequest {
 message BidiStreamResponse {
 	int64 stroke = 1;
 }
-`
+`,
+}

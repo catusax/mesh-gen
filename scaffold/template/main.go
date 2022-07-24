@@ -1,7 +1,14 @@
 package template
 
+type Template struct {
+	Path  string
+	Value string
+}
+
 // MainSRV is the main template used for new service projects.
-var MainSRV = `package main
+var MainSRV = Template{
+	Path: "main.go",
+	Value: `package main
 
 import (
 	"{{.Vendor}}{{.Service}}/handler"
@@ -55,4 +62,5 @@ func NewRpcServer(logger *zap.Logger) *grpc.Server {
 		)),
 	)
 }
-`
+`,
+}

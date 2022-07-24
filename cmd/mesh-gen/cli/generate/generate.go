@@ -8,6 +8,7 @@ import (
 	"github.com/catusax/mesh-gen/scaffold/template"
 	"github.com/urfave/cli/v2"
 	"os"
+	"path/filepath"
 	"strings"
 
 	mcli "github.com/catusax/mesh-gen/cmd/mesh-gen/cli"
@@ -65,10 +66,11 @@ func Skaffold(ctx *cli.Context) error {
 	)
 
 	files := []generator2.File{
-		{".dockerignore", template.DockerIgnore},
-		{"resources/configmap.yaml", template.KubernetesEnv},
-		{"resources/deployment.yaml", template.KubernetesDeployment},
-		{"skaffold.yaml", template.SkaffoldCFG},
+		{".dockerignore", generator2.GetTemplate(template.DockerIgnore)},
+		{"Dockerfile", generator2.GetTemplate(template.Dockerfile)},
+		{filepath.Join("resources", "configmap.yaml"), generator2.GetTemplate(template.KubernetesEnv)},
+		{filepath.Join("resources", "deployment.yaml"), generator2.GetTemplate(template.KubernetesDeployment)},
+		{"skaffold.yaml", generator2.GetTemplate(template.SkaffoldCFG)},
 	}
 
 	if err := g.Generate(files); err != nil {
