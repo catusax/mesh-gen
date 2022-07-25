@@ -31,7 +31,7 @@ func GenerateClientFile(gen *protogen.Plugin, file *protogen.File) *protogen.Gen
 		g.P("func Get", srv.GoName, "Client() ", srv.GoName, "Client {")
 		g.P(` var host string`)
 		g.P("if ", osPackage.Ident("Getenv"), "(\"CONTAINER\") != \"\" {")
-		g.P("host = \"", getServiceMeshHost(GetConfig().Namespace, GetConfig().Mesh, GetConfig().Namespace), "\"")
+		g.P("host = \"", getServiceMeshHost(GetConfig().Name, GetConfig().Mesh, GetConfig().Namespace), "\"")
 		g.P(`
 	} else {
 		host = "localhost"
