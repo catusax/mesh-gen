@@ -18,8 +18,8 @@ import (
 
 // GenerateHandlerFile generates handler to be implemented.
 func GenerateHandlerFile(gen *protogen.Plugin, file *protogen.File) *protogen.GeneratedFile {
-	filename := file.GeneratedFilenamePrefix + "_handler.go"
-	g := gen.NewGeneratedFile(filename, file.GoImportPath)
+	filename := file.GeneratedFilenamePrefix + ".go"
+	g := gen.NewGeneratedFile(filepath.Join(GetConfig().Handler, filename), file.GoImportPath)
 
 	//prevFile, err := os.Open(filename)
 	entry, _ := os.ReadDir(GetConfig().Handler)
@@ -193,7 +193,7 @@ func addHandlerToFile(gen *protogen.Plugin, file *protogen.File) *protogen.Gener
 
 			// 修改数据后长度会变，需要重新解析语法树 , 否则需要记录每次插入的长度
 			files[filepath.Join(GetConfig().Handler, srv.GoName+".go")] = buff.Bytes()
-			addHandlerToFile(gen, file) //TODO: 这里崩溃，前面插入有问题，新建文件时候要写入package panic: 1:1: expected 'package', found 'func'
+			addHandlerToFile(gen, file)
 			g.Skip()
 			return nil
 		}
