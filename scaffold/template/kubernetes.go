@@ -44,6 +44,8 @@ spec:
       containers:
         - name: {{dash .Service}}
           image: {{.ContainerTag}}:{{.Version}}
+          ports:
+            - containerPort: {{.Port}}
           envFrom:
             - configMapRef:
                 name: {{dash .Service}}-env
