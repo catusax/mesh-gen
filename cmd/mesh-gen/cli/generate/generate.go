@@ -84,8 +84,6 @@ func Skaffold(ctx *cli.Context) error {
 	)
 
 	files := []generator2.File{
-		{".dockerignore", generator2.GetTemplate(template.DockerIgnore)},
-		{"Dockerfile", generator2.GetTemplate(template.Dockerfile)},
 		{filepath.Join("resources", "configmap.yaml"), generator2.GetTemplate(template.KubernetesEnv)},
 		{filepath.Join("resources", "deployment.yaml"), generator2.GetTemplate(template.KubernetesDeployment)},
 		{"skaffold.yaml", generator2.GetTemplate(template.SkaffoldCFG)},
@@ -93,9 +91,11 @@ func Skaffold(ctx *cli.Context) error {
 
 	if ctx.Bool("all") {
 		files = append(files,
-			generator2.File{".gitignore", generator2.GetTemplate(template.GitIgnore)},
-			generator2.File{"Makefile", generator2.GetTemplate(template.Makefile)},
-			generator2.File{"main.go", generator2.GetTemplate(template.MainSRV)},
+			generator2.File{Path: ".gitignore", Template: generator2.GetTemplate(template.GitIgnore)},
+			generator2.File{Path: "Makefile", Template: generator2.GetTemplate(template.Makefile)},
+			generator2.File{Path: "main.go", Template: generator2.GetTemplate(template.MainSRV)},
+			generator2.File{Path: ".dockerignore", Template: generator2.GetTemplate(template.DockerIgnore)},
+			generator2.File{Path: "Dockerfile", Template: generator2.GetTemplate(template.Dockerfile)},
 		)
 	}
 
@@ -109,7 +109,7 @@ func Skaffold(ctx *cli.Context) error {
 }
 
 func getService() (string, error) {
-	return ReadKey("Makefile", "NAME")
+	return ReadKey("NAME")
 }
 
 func getServiceVendor(s string) (string, error) {
@@ -141,35 +141,12 @@ func getServiceVendor(s string) (string, error) {
 }
 
 func getContainerTag() (string, error) {
-	f, err := os.Open("Makefile")
+	name, err := ReadKey("NAME")
 	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-
-	registryPrefix := ""
-	name := ""
-
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		if strings.HasPrefix(scanner.Text(), "REGISTRY_PREFIX=") {
-			registryPrefix = scanner.Text()
-		}
-
-		if strings.HasPrefix(scanner.Text(), "NAME=") {
-			name = scanner.Text()
-		}
-
-	}
-
-	name = name[strings.Index(name, "=")+1:]
-	registryPrefix = registryPrefix[strings.Index(registryPrefix, "=")+1:]
-
-	if name == "" {
-		fmt.Println("Makefile is missing NAME variables")
 		return "", errors.New("could not get container tag")
 	}
 
+	registryPrefix, _ := ReadKey("REGISTRY_PREFIX")
 	if registryPrefix == "" {
 		return name, nil
 	}
@@ -178,26 +155,30 @@ func getContainerTag() (string, error) {
 }
 
 func getVersion() (string, error) {
-	return ReadKey("Makefile", "VERSION")
+	return ReadKey("VERSION")
 }
 
 func getPort() (string, error) {
-	return ReadKey("Makefile", "PORT")
+	return ReadKey("PORT")
 }
 
 func getNamespace() (string, error) {
-	return ReadKey("Makefile", "NAMESPACE")
+	return ReadKey("NAMESPACE")
 }
 
 func getRegistryPrefix() (string, error) {
-	return ReadKey("Makefile", "REGISTRY_PREFIX")
+	return ReadKey("REGISTRY_PREFIX")
 }
 
 func getMesh() (string, error) {
-	return ReadKey("Makefile", "MESH")
+	return ReadKey("MESH")
 }
 
-func ReadKey(file string, key string) (string, error) {
+func ReadKey(key string) (string, error) {
+	if env, ok := os.LookupEnv("SRV_" + key); ok {
+		return env, nil
+	}
+
 	f, err := os.Open("Makefile")
 	if err != nil {
 		return "", err
@@ -214,13 +195,11 @@ func ReadKey(file string, key string) (string, error) {
 	}
 
 	if value == "" {
-		fmt.Println("Makefile is missing variable", key)
 		return "", errors.New("could not get " + key)
 	}
 
 	position := strings.Index(value, "=")
 	if position == -1 {
-		fmt.Println("WARN: Makefile is missing variable", key)
 		return "", errors.New("could not get " + key)
 	}
 

@@ -5,8 +5,8 @@ var Makefile = Template{
 	Path: "Makefile",
 	Value: `
 GOPATH:=$(shell go env GOPATH)
-NAME={{.Service}}
 BIN={{.Service}}
+NAME={{.Service}}
 REGISTRY_PREFIX={{.RegistryPrefix}}
 VERSION={{.Version}}
 PORT={{.Port}}
