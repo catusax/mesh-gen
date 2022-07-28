@@ -10,6 +10,9 @@ kind: Config
 metadata:
   name: {{.Service}}
 build:
+  tagPolicy:
+    envTemplate:
+      template: "{{.Version}}"
   artifacts:
     - image: {{.ContainerTag}}
       docker:
