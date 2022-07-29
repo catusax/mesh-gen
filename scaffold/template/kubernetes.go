@@ -44,7 +44,6 @@ spec:
       containers:
         - name: {{dash .Service}}
           image: {{.ContainerTag}}:{{.Version}}
-          imagePullPolicy: Always
           ports:
             - containerPort: {{.Port}}
           envFrom:
