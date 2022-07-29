@@ -62,6 +62,7 @@ func createProject(ctx *cli.Context) error {
 		generator2.Namespace(defaultNamespace),
 		generator2.RegistryPrefix(defaultRegistryPrefix),
 		generator2.Mesh(defaultMesh),
+		generator2.Replica(defaultReplica),
 	)
 
 	files := []generator2.File{

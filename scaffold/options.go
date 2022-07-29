@@ -27,6 +27,9 @@ type Options struct {
 
 	//Mesh service mesh name eg:istio
 	Mesh string
+
+	//Replica number of ReplicaSet
+	Replica int
 }
 
 // Option manipulates the Options passed.
@@ -86,5 +89,11 @@ func RegistryPrefix(r string) Option {
 func Mesh(r string) Option {
 	return func(o *Options) {
 		o.Mesh = r
+	}
+}
+
+func Replica(r int) Option {
+	return func(o *Options) {
+		o.Replica = r
 	}
 }

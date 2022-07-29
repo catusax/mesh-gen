@@ -12,6 +12,7 @@ VERSION={{.Version}}
 PORT={{.Port}}
 NAMESPACE={{.Namespace}}
 MESH={{.Mesh}}
+REPLICA={{.Replica}}
 
 .PHONY: init
 init:

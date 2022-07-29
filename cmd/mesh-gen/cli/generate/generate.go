@@ -9,6 +9,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	mcli "github.com/catusax/mesh-gen/cmd/mesh-gen/cli"
@@ -69,6 +70,14 @@ func Skaffold(ctx *cli.Context) error {
 
 	registryPrefix, _ := getRegistryPrefix()
 
+	replica, _ := getReplica()
+
+	var replicaNumber int
+	replicaNumber, err = strconv.Atoi(replica)
+	if err != nil {
+		replicaNumber = 3
+	}
+
 	mesh, _ := getMesh()
 
 	g := generator2.New(
@@ -81,6 +90,7 @@ func Skaffold(ctx *cli.Context) error {
 		generator2.Namespace(namespace),
 		generator2.RegistryPrefix(registryPrefix),
 		generator2.Mesh(mesh),
+		generator2.Replica(replicaNumber),
 	)
 
 	files := []generator2.File{
@@ -172,6 +182,10 @@ func getRegistryPrefix() (string, error) {
 
 func getMesh() (string, error) {
 	return ReadKey("MESH")
+}
+
+func getReplica() (string, error) {
+	return ReadKey("REPLICA")
 }
 
 func ReadKey(key string) (string, error) {

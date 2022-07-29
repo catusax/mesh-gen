@@ -32,7 +32,7 @@ metadata:
   labels:
     app: {{dash .Service}}
 spec:
-  replicas: 1
+  replicas: {{ .Replica }}
   selector:
     matchLabels:
       app: {{dash .Service}}

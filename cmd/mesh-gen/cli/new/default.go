@@ -6,4 +6,5 @@ const (
 	defaultNamespace      = "default"
 	defaultRegistryPrefix = ""
 	defaultMesh           = "istio"
+	defaultReplica        = 3
 )
