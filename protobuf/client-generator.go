@@ -47,9 +47,9 @@ func GenerateClientFile(gen *protogen.Plugin, file *protogen.File) *protogen.Gen
 			grpcPackage.Ident("WithTransportCredentials"),
 			"(", grpcInsecurePackage.Ident("NewCredentials"), "()))")
 
-		g.P(`if err != nil {
-		panic(err)`)
+		g.P("if err != nil {")
 		g.P("_", srv.GoName, "Once = ", syncPackage.Ident("Once{}"))
+		g.P("panic(err)")
 		g.P("}")
 
 		g.P("_", srv.GoName, "client = New", srv.GoName, "Client(dial)")
