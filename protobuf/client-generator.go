@@ -12,6 +12,7 @@ var (
 	syncPackage         = protogen.GoImportPath("sync")
 	grpcPackage         = protogen.GoImportPath("google.golang.org/grpc")
 	grpcInsecurePackage = protogen.GoImportPath("google.golang.org/grpc/credentials/insecure")
+	grpcXdsPackage      = protogen.GoImportPath("google.golang.org/grpc/xds")
 )
 
 // GenerateClientFile generates Service client with go-kit endpoint
@@ -23,6 +24,8 @@ func GenerateClientFile(gen *protogen.Plugin, file *protogen.File) *protogen.Gen
 	g.P("package ", file.GoPackageName)
 	g.P()
 
+	g.Import(grpcXdsPackage)
+
 	//create client
 	for _, srv := range file.Services {
 		g.P("var _", srv.GoName, "Once ", syncPackage.Ident("Once"))
@@ -30,7 +33,9 @@ func GenerateClientFile(gen *protogen.Plugin, file *protogen.File) *protogen.Gen
 
 		g.P("func Get", srv.GoName, "Client() ", srv.GoName, "Client {")
 		g.P(` var host string`)
+		g.P(` var scheme string`)
 		g.P("if ", osPackage.Ident("Getenv"), "(\"CONTAINER\") != \"\" {")
+		g.P("scheme = \"xds:///\"")
 		g.P("host = \"", getServiceMeshHost(GetConfig().Name, GetConfig().Mesh, GetConfig().Namespace), "\"")
 		g.P(`
 	} else {
@@ -38,7 +43,7 @@ func GenerateClientFile(gen *protogen.Plugin, file *protogen.File) *protogen.Gen
 	}`)
 		g.P("_", srv.GoName, "Once.Do(func() {")
 
-		g.P(" dial, err := ", grpcPackage.Ident("Dial"), "(host+\":", GetConfig().Port, "\",",
+		g.P(" dial, err := ", grpcPackage.Ident("Dial"), "(scheme+host+\":", GetConfig().Port, "\",",
 			grpcPackage.Ident("WithTransportCredentials"),
 			"(", grpcInsecurePackage.Ident("NewCredentials"), "()))")
 
