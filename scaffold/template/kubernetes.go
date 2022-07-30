@@ -44,7 +44,7 @@ spec:
       annotations:
         inject.istio.io/templates: grpc-agent
         proxy.istio.io/config: '{"holdApplicationUntilProxyStarts": true}'
-{{ end -}}
+{{- end }}
     spec:
       containers:
         - name: {{dash .Service}}
@@ -68,7 +68,7 @@ metadata:
   annotations:
     mesh.traefik.io/traffic-type: "http"
     mesh.traefik.io/scheme: "h2c"
-{{ end -}}
+{{- end }}
 spec:
   ports:
     - port: {{.Port}}
