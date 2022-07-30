@@ -8,6 +8,7 @@ import (
 	"github.com/catusax/mesh-gen/scaffold/template"
 	"github.com/urfave/cli/v2"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -28,6 +29,13 @@ func init() {
 					"A",
 				},
 				Usage: "Regenerate all files except ./handler ./proto ./go.mod",
+			},
+			&cli.BoolFlag{
+				Name: "fmt",
+				Aliases: []string{
+					"f",
+				},
+				Usage: "Format code using go fmt .",
 			},
 		},
 	}
@@ -111,6 +119,10 @@ func Skaffold(ctx *cli.Context) error {
 
 	if err := g.Generate(files); err != nil {
 		return err
+	}
+
+	if ctx.Bool("fmt") {
+		exec.Command("go", "fmt", ".")
 	}
 
 	fmt.Println("skaffold project template files generated")
