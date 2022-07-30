@@ -54,6 +54,7 @@ else
 	TAG=$(REGISTRY_PREFIX)/$(NAME)
 endif
 docker:
+	@touch Dockerfile
 	@DOCKER_BUILDKIT=1 docker build -t $(TAG):$(VERSION) .
 
 .PHONY: docker-push
@@ -66,6 +67,7 @@ dev:
 
 .PHONY: run
 run:
+	@touch Dockerfile
 	@skaffold run --tail
 
 `,

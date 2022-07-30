@@ -9,11 +9,11 @@ RUN apk --update --no-cache add ca-certificates gcc libtool make musl-dev protoc
 WORKDIR /go/src/{{.Service}}
 COPY go.mod .
 COPY go.sum .
-RUN --mount=type=cache,target=/go/pkg/mod go mod download
+RUN --mount=type=cache,mode=0777,id=gomod,target=/go/pkg/mod go mod download
 COPY . .
-RUN --mount=type=cache,target=/root/.cache/go-build \
-    --mount=type=cache,target=/go/pkg/mod \
-    make tidy build
+RUN --mount=type=cache,mode=0777,target=/root/.cache/go-build \
+    --mount=type=cache,mode=0777,id=gomod,target=/go/pkg/mod \
+    go mod tidy && go build -o {{.Service}}
 
 FROM scratch
 ENV CONTAINER=docker
