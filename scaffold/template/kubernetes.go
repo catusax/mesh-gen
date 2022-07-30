@@ -54,7 +54,14 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{dash .Service}}-env
-
+          readinessProbe:
+            exec:
+              command: [ "/bin/grpc_health_probe", "-addr=:{{.Port}}" ]
+            initialDelaySeconds: 5
+          livenessProbe:
+            exec:
+              command: [ "/bin/grpc_health_probe", "-addr=:{{.Port}}" ]
+            initialDelaySeconds: 10
 
 ---
 apiVersion: v1

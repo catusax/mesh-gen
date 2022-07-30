@@ -64,6 +64,8 @@ func WriteTemplate(path string, force bool) error {
 		template.Module,
 		template.ProtoSRV,
 		template.SkaffoldCFG,
+		template.GRPCMiddleWare,
+		template.GRPCHealth,
 	}
 
 	for i := range templates {

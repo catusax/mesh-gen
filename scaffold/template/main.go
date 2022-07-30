@@ -12,16 +12,12 @@ var MainSRV = Template{
 
 import (
 	"{{.Vendor}}{{.Service}}/handler"
+	"{{.Vendor}}{{.Service}}/grpc"
 	pb "{{.Vendor}}{{.Service}}/proto"
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap"
 	syslog "log"
 	"net"
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
-	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
-	"google.golang.org/grpc"
-    "google.golang.org/grpc/xds"
 )
 
 var (
@@ -38,9 +34,10 @@ func main() {
 
 	grpcListener, err := net.Listen("tcp", ":{{.Port}}")
 	// Create service
-	srv := NewRpcServer(logger)
+	srv := grpc.NewRpcServer(logger)
 
 	pb.Register{{title .Service}}Server(srv, new(handler.{{title .Service}}))
+	grpc.RegisterHealthServer(srv)
 
 	syslog.Println("serving")
 	err = srv.Serve(grpcListener)
@@ -50,28 +47,5 @@ func main() {
 	}
 }
 
-type GRPCServer interface {
-	grpc.ServiceRegistrar
-	Serve(lis net.Listener) error
-}
-
-func NewRpcServer(logger *zap.Logger) GRPCServer {
-	options := []grpc.ServerOption{
-		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
-			grpc_zap.StreamServerInterceptor(zap.L()),
-			grpc_recovery.StreamServerInterceptor(),
-		)),
-		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
-			grpc_zap.UnaryServerInterceptor(zap.L()),
-			grpc_recovery.UnaryServerInterceptor(),
-		)),
-	}
-
-	if os.Getenv("CONTAINER") != "" {
-		return xds.NewGRPCServer(options...)
-	} else {
-		return grpc.NewServer(options...)
-	}
-}
 `,
 }

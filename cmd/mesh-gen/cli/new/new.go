@@ -81,6 +81,8 @@ func createProject(ctx *cli.Context) error {
 		{"resources/configmap.yaml", generator2.GetTemplate(template.KubernetesEnv)},
 		{"resources/deployment.yaml", generator2.GetTemplate(template.KubernetesDeployment)},
 		{"skaffold.yaml", generator2.GetTemplate(template.SkaffoldCFG)},
+		{template.GRPCMiddleWare.Path, generator2.GetTemplate(template.GRPCMiddleWare)},
+		{template.GRPCHealth.Path, generator2.GetTemplate(template.GRPCHealth)},
 	}...)
 
 	if err := g.Generate(files); err != nil {

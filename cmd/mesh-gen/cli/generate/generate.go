@@ -114,6 +114,8 @@ func Skaffold(ctx *cli.Context) error {
 			generator2.File{Path: "main.go", Template: generator2.GetTemplate(template.MainSRV)},
 			generator2.File{Path: ".dockerignore", Template: generator2.GetTemplate(template.DockerIgnore)},
 			generator2.File{Path: "Dockerfile", Template: generator2.GetTemplate(template.Dockerfile)},
+			generator2.File{Path: template.GRPCMiddleWare.Path, Template: generator2.GetTemplate(template.GRPCMiddleWare)},
+			generator2.File{Path: template.GRPCHealth.Path, Template: generator2.GetTemplate(template.GRPCHealth)},
 		)
 	}
 

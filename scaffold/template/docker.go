@@ -15,7 +15,7 @@ RUN --mount=type=cache,mode=0777,target=/root/.cache/go-build \
     --mount=type=cache,mode=0777,id=gomod,target=/go/pkg/mod \
     go mod tidy && go build -o {{.Service}}
 
-FROM scratch
+FROM ghcr.io/catusax/grpc-runner:latest
 ENV CONTAINER=docker
 COPY --from=builder /etc/ssl/certs /etc/ssl/certs
 COPY --from=builder /go/src/{{.Service}}/{{.Service}} /{{.Service}}
