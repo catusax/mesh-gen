@@ -10,6 +10,7 @@ var _mesh *string
 var _namespace *string
 var _port *string
 var _name *string
+var _options *string
 var Flags = new(flag.FlagSet)
 
 type Flag struct {
@@ -19,6 +20,7 @@ type Flag struct {
 	Namespace string
 	Port      string
 	Name      string
+	Options   string
 }
 
 func init() {
@@ -28,6 +30,7 @@ func init() {
 	_namespace = Flags.String("namespace", "default", "k8s namespace of your service")
 	_port = Flags.String("port", "8080", "grpc port of your service")
 	_name = Flags.String("name", "localhost", "name your service")
+	_options = Flags.String("options", "", "grpc options")
 }
 
 var _config *Flag = nil
@@ -43,6 +46,7 @@ func GetConfig() *Flag {
 		Namespace: *_namespace,
 		Port:      *_port,
 		Name:      *_name,
+		Options:   *_options,
 	}
 	return _config
 }
