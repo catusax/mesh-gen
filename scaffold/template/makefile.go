@@ -70,5 +70,10 @@ run:
 	@touch Dockerfile
 	@skaffold run --tail
 
+l=20
+.PHONY: log
+log:
+	@kubectl logs -f deploy/$(NAME)  -c $(NAME) -n $(NAMESPACE) --tail=$(l)
+
 `,
 }
