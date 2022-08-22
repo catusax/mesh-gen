@@ -262,6 +262,9 @@ func generateNewHandlerFile(g *protogen.GeneratedFile, file *protogen.File) *pro
 }
 
 func generateMethod(buf *bytes.Buffer, g *protogen.GeneratedFile, srv *protogen.Service, method *protogen.Method) {
+
+	g.P()
+
 	g.Annotate(srv.GoName+"."+method.GoName, method.Location)
 
 	FPrint(buf, g, method.Comments.Leading,
