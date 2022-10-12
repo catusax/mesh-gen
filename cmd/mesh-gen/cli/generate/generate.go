@@ -105,6 +105,7 @@ func Skaffold(ctx *cli.Context) error {
 		{filepath.Join("resources", "configmap.yaml"), generator2.GetTemplate(template.KubernetesEnv)},
 		{filepath.Join("resources", "deployment.yaml"), generator2.GetTemplate(template.KubernetesDeployment)},
 		{"skaffold.yaml", generator2.GetTemplate(template.SkaffoldCFG)},
+		{"Dockerfile", generator2.GetTemplate(template.Dockerfile)},
 	}
 
 	if ctx.Bool("all") {
